@@ -99,12 +99,14 @@ export function useCamera({ enabled = true, onFrame, frameRate = 10 }: UseCamera
     }
   }, [stream, onFrame, frameRate])
 
-  // Mock function to simulate preprocessing frames to LSTM sequence
+  // Mock function to simulate preprocessing frames to LSTM sequence.
+  // Each call to this function represents one row (42 features)
+  // of the final 35x42 matrix expected by the LSTM model.
   const preprocessFrame = (imageData: ImageData): number[] => {
     // In a real implementation, this would use TensorFlow.js or similar
-    // to extract pose keypoints and convert to a sequence
-    // For now, we'll return a mock sequence
-    return Array.from({ length: 30 }, () => Math.random())
+    // to extract pose keypoints and convert to a sequence.
+    // For now, we return a mock sequence of 42 random floats.
+    return Array.from({ length: 42 }, () => Math.random())
   }
 
   return {

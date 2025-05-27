@@ -7,6 +7,7 @@ import { PredictionResult } from "@/components/prediction-result"
 import { LabelCard } from "@/components/label-card"
 import { useLabels } from "@/hooks/use-labels"
 import type { Label } from "@/store/use-store"
+import { type PredictionResponse } from "@/lib/api"; // Added import
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -22,7 +23,7 @@ export default function PracticePage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredLabels, setFilteredLabels] = useState<Label[]>([])
   const [activeCategory, setActiveCategory] = useState<string>("all")
-  const [predictionResult, setPredictionResult] = useState<any>(null)
+  const [predictionResult, setPredictionResult] = useState<PredictionResponse | null>(null)
 
   // Asegurarnos de que labels sea un array
   const safeLabels = Array.isArray(labels) ? labels : []
@@ -68,7 +69,7 @@ export default function PracticePage() {
     router.push(`/practice?label=${label.id}`)
   }
 
-  const handlePredictionComplete = (result: any) => {
+  const handlePredictionComplete = (result: PredictionResponse) => {
     setPredictionResult(result)
   }
 
@@ -124,8 +125,8 @@ export default function PracticePage() {
 
               <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory}>
                 <TabsList className="mb-4 flex flex-wrap h-auto">
-                  {categories.map((category) => (
-                    <TabsTrigger key={category} value={category} className="mb-1">
+                  {categories.map((category, index) => (
+                    <TabsTrigger key={`${category}-${index}`} value={category} className="mb-1">
                       {category === "all" ? "Todas" : category}
                     </TabsTrigger>
                   ))}

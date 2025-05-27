@@ -19,7 +19,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
 // Tipos para las respuestas de la API
 export interface PredictionRequest {
-  sequence: number[]
+  sequence: number[][] // Expected as a 35x42 matrix (35 frames, 42 features/frame)
   expected_label: string
   nickname: string
 }
