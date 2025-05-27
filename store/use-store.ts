@@ -39,7 +39,8 @@ export const useStore = create<AppState>()(
   devtools(
     persist(
       (set) => ({
-        ...initialState, // Usar el estado inicial explícito
+        // ... store definition (initialState and actions) ...
+        ...initialState, // Ensure initialState is spread here
 
         setLabels: (labels) => set({ labels: Array.isArray(labels) ? labels : [] }),
         setRecords: (records) => set({ records: Array.isArray(records) ? records : [] }),
@@ -53,13 +54,33 @@ export const useStore = create<AppState>()(
       }),
       {
         name: "signmed-storage",
-        // Asegurarnos de que el estado inicial se use si hay algún problema con el almacenamiento persistente
-        onRehydrateStorage: () => (state) => {
-          if (!state) return
-
-          // Asegurarnos de que los arrays existan
-          if (!Array.isArray(state.labels)) state.labels = []
-          if (!Array.isArray(state.records)) state.records = []
+        // Custom merge function to handle rehydration from localStorage.
+        // This ensures that if 'labels' or 'records' arrays are missing or
+        // are not arrays in the persisted state (e.g., due to an old/corrupted
+        // localStorage entry or a previous bug), they are initialized as empty arrays
+        // in the store, preventing 'undefined.length' errors in components.
+        merge: (persistedState, currentState) => {
+          const merged = { ...currentState, ...persistedState };
+          if (!Array.isArray(merged.labels)) {
+            merged.labels = [];
+          }
+          if (!Array.isArray(merged.records)) {
+            merged.records = [];
+          }
+          // Keep other persisted state as is, or add more specific merges if needed
+          return merged;
+        },
+        // The onRehydrateStorage can be kept for logging/debugging if needed, or removed if merge handles it.
+        // For now, let's keep it but comment out its content as merge is more direct.
+        onRehydrateStorage: () => (state, error) => {
+          if (error) {
+            console.warn("Zustand persist: An error occurred during rehydration:", error);
+          }
+          // console.log("Zustand persist: Rehydration complete. Current state:", state);
+          // if (state) {
+          //   if (!Array.isArray(state.labels)) console.warn("Rehydrated state.labels is not an array!");
+          //   if (!Array.isArray(state.records)) console.warn("Rehydrated state.records is not an array!");
+          // }
         },
       },
     ),
