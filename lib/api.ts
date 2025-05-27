@@ -1,3 +1,18 @@
+/**
+ * @module lib/api
+ * @description
+ * This module serves as the central API service for the application.
+ * It utilizes the `ApiService` class to manage all HTTP requests.
+ * Key features include:
+ * - Automatic retries for failed requests (with exponential backoff).
+ * - Fallback to dummy data if the API is unreachable or returns an error, ensuring
+ *   the application remains usable for demonstration or testing purposes.
+ * - Inclusion of necessary HTTP headers for all requests, such as
+ *   'Content-Type: application/json' and 'ngrok-skip-browser-warning'
+ *   to facilitate development and testing with ngrok tunnels.
+ * - Defines data types for API requests and responses.
+ * - Provides helper functions for user nickname management.
+ */
 // API Service - Centraliza todas las llamadas a la API con fallback a datos dummy
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
@@ -233,7 +248,7 @@ const generateDummyProgress = (): ProgressData[] => {
 const getApiHeaders = (additionalHeaders: Record<string, string> = {}): Record<string, string> => {
   return {
     "Content-Type": "application/json",
-    "ngrok-skip-browser-warning": "true", // Evita advertencias de ngrok
+    "ngrok-skip-browser-warning": "true", // Evita advertencias de ngrok al desarrollar/probar
     ...additionalHeaders,
   }
 }
