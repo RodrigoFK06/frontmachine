@@ -74,7 +74,15 @@ export function CameraModule({ selectedLabel, onPredictionComplete }: CameraModu
           clearInterval(countdownRef.current!)
           setIsRecording(true)
 
-          // Recording duration is now handled by NUM_FRAMES and useEffect
+          // Recording starts: set a timer for 3 seconds to automatically stop and submit.
+          // Frames will be collected up to NUM_FRAMES (35) within this period.
+          if (recordingRef.current) {
+            clearTimeout(recordingRef.current); // Clear any existing timer
+          }
+          recordingRef.current = setTimeout(() => {
+            setIsRecording(false);
+            submitRecording();
+          }, 3000); // 3-second recording duration
           return null
         }
         return prev - 1
@@ -135,15 +143,6 @@ export function CameraModule({ selectedLabel, onPredictionComplete }: CameraModu
       setIsRecording(false) // Safeguard
     }
   }, [selectedLabel, frames, predict, onPredictionComplete, setFrames, toast]) // NUM_FRAMES & NUM_FEATURES are constants
-
-  // Effect to automatically stop recording when NUM_FRAMES are collected.
-  // This ensures submission happens once exactly NUM_FRAMES are collected.
-  useEffect(() => {
-    if (isRecording && frames.length === NUM_FRAMES) {
-      setIsRecording(false) // Stop recording UI indication
-      submitRecording() // Call the existing submitRecording function
-    }
-  }, [frames, isRecording, submitRecording]) // Added submitRecording
 
   // Clean up on unmount
   useEffect(() => {
