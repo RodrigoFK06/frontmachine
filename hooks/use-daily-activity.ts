@@ -3,6 +3,12 @@
 import { useState } from "react"
 import { apiService, getUserNickname, type DailyActivity } from "@/lib/api"
 
+/**
+ * Hook to fetch and manage daily activity data.
+ * Note: This hook is currently not used in any active UI component (as of YYYY-MM-DD),
+ * but is implemented and ready for future integration (e.g., for a calendar view
+ * or detailed daily activity breakdown).
+ */
 export function useDailyActivity() {
   const [isLoading, setIsLoading] = useState(false)
   const [activityCache, setActivityCache] = useState<Map<string, DailyActivity>>(new Map())
