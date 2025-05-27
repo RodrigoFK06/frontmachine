@@ -15,6 +15,10 @@ interface CameraModuleProps {
   onPredictionComplete?: (result: any) => void
 }
 
+// Constants for the expected LSTM input matrix dimensions
+const NUM_FRAMES = 35
+const NUM_FEATURES = 42
+
 export function CameraModule({ selectedLabel, onPredictionComplete }: CameraModuleProps) {
   const [isRecording, setIsRecording] = useState(false)
   const [countdown, setCountdown] = useState<number | null>(null)
@@ -27,8 +31,14 @@ export function CameraModule({ selectedLabel, onPredictionComplete }: CameraModu
   // Handle frame processing
   const handleFrame = (imageData: ImageData) => {
     if (isRecording) {
-      const processedFrame = preprocessFrame(imageData)
-      setFrames((prev) => [...prev, processedFrame])
+      setFrames((prevFrames) => {
+        // Collects up to NUM_FRAMES, each processed by preprocessFrame (providing NUM_FEATURES features)
+        if (prevFrames.length < NUM_FRAMES) {
+          const processedFrame = preprocessFrame(imageData) // from useCamera, now returns number[42]
+          return [...prevFrames, processedFrame]
+        }
+        return prevFrames
+      })
     }
   }
 
@@ -64,12 +74,7 @@ export function CameraModule({ selectedLabel, onPredictionComplete }: CameraModu
           clearInterval(countdownRef.current!)
           setIsRecording(true)
 
-          // Record for 3 seconds
-          recordingRef.current = setTimeout(() => {
-            setIsRecording(false)
-            submitRecording()
-          }, 3000)
-
+          // Recording duration is now handled by NUM_FRAMES and useEffect
           return null
         }
         return prev - 1
@@ -93,16 +98,26 @@ export function CameraModule({ selectedLabel, onPredictionComplete }: CameraModu
   const submitRecording = async () => {
     if (!selectedLabel) return
 
-    let sequence: number[]
+    let sequenceToSubmit: number[][]
 
-    if (frames.length === 0) {
-      sequence = Array.from({ length: 100 }, () => Math.random())
+    // Validate if the collected frames match the expected 35x42 structure
+    if (frames.length === NUM_FRAMES && frames.every((frame) => frame.length === NUM_FEATURES)) {
+      sequenceToSubmit = frames
     } else {
-      sequence = frames.flat().slice(0, 100)
+      console.warn(
+        `Frame data is not as expected (got ${frames.length} frames, expected ${NUM_FRAMES} of ${NUM_FEATURES} features). Using dummy 35x42 data.`,
+      )
+      // Fallback to a dummy 35x42 matrix of random numbers
+      sequenceToSubmit = Array.from({ length: NUM_FRAMES }, () =>
+        Array.from({ length: NUM_FEATURES }, () => Math.random()),
+      )
     }
 
+    // Clear frames for the next recording
+    setFrames([])
+
     const result = await predict({
-      sequence,
+      sequence: sequenceToSubmit, // This is now number[][], expected as 35x42 matrix
       expected_label: selectedLabel.name,
     })
 
@@ -111,11 +126,21 @@ export function CameraModule({ selectedLabel, onPredictionComplete }: CameraModu
     }
   }
 
+  // Effect to automatically stop recording when NUM_FRAMES are collected.
+  // This ensures submission happens once exactly NUM_FRAMES are collected.
+  useEffect(() => {
+    if (isRecording && frames.length === NUM_FRAMES) {
+      setIsRecording(false) // Stop recording UI indication
+      submitRecording() // Call the existing submitRecording function
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frames, isRecording]) // submitRecording is not added to avoid useCallback complexities for this task
+
   // Clean up on unmount
   useEffect(() => {
     return () => {
       if (countdownRef.current) clearInterval(countdownRef.current)
-      if (recordingRef.current) clearTimeout(recordingRef.current)
+      if (recordingRef.current) clearTimeout(recordingRef.current) // recordingRef might be null now but good practice
     }
   }, [])
 
