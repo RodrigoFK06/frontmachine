@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState, useEffect, useCallback } from "react" // Added useCallback
 import { useCamera } from "@/hooks/use-camera"
 import { usePredict } from "@/hooks/use-predict"
 import type { Label } from "@/store/use-store"
@@ -95,7 +95,7 @@ export function CameraModule({ selectedLabel, onPredictionComplete }: CameraModu
   }
 
   // Submit recording for prediction
-  const submitRecording = async () => {
+  const submitRecording = useCallback(async () => {
     if (!selectedLabel) return
 
     let sequenceToSubmit: number[][]
@@ -116,15 +116,25 @@ export function CameraModule({ selectedLabel, onPredictionComplete }: CameraModu
     // Clear frames for the next recording
     setFrames([])
 
-    const result = await predict({
-      sequence: sequenceToSubmit, // This is now number[][], expected as 35x42 matrix
-      expected_label: selectedLabel.name,
-    })
+    try {
+      const result = await predict({
+        sequence: sequenceToSubmit, // This is now number[][], expected as 35x42 matrix
+        expected_label: selectedLabel.name,
+      })
 
-    if (result && onPredictionComplete) {
-      onPredictionComplete(result)
+      if (result && onPredictionComplete) {
+        onPredictionComplete(result)
+      }
+    } catch (error) {
+      console.error("Error during prediction submission or completion callback:", error)
+      toast({
+        title: "Error de Procesamiento",
+        description: "Ocurrió un error al procesar la predicción.",
+        variant: "destructive",
+      })
+      setIsRecording(false) // Safeguard
     }
-  }
+  }, [selectedLabel, frames, predict, onPredictionComplete, setFrames, toast]) // NUM_FRAMES & NUM_FEATURES are constants
 
   // Effect to automatically stop recording when NUM_FRAMES are collected.
   // This ensures submission happens once exactly NUM_FRAMES are collected.
@@ -133,8 +143,7 @@ export function CameraModule({ selectedLabel, onPredictionComplete }: CameraModu
       setIsRecording(false) // Stop recording UI indication
       submitRecording() // Call the existing submitRecording function
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [frames, isRecording]) // submitRecording is not added to avoid useCallback complexities for this task
+  }, [frames, isRecording, submitRecording]) // Added submitRecording
 
   // Clean up on unmount
   useEffect(() => {
