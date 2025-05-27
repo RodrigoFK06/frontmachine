@@ -4,18 +4,15 @@
  * This module serves as the central API service for the application.
  * It utilizes the `ApiService` class to manage all HTTP requests.
  * Key features include:
- * - Automatic retries for failed requests (with exponential backoff).
- * - Fallback to dummy data if the API is unreachable or returns an error, ensuring
- *   the application remains usable for demonstration or testing purposes.
- * - Inclusion of necessary HTTP headers for all requests, such as
- *   'Content-Type: application/json' and 'ngrok-skip-browser-warning'
- *   to facilitate development and testing with ngrok tunnels.
+ * - Calls to backend services are proxied through Next.js API routes (under /api/...).
+ * - Automatic retries for failed requests to these API routes.
+ * - Fallback to dummy data if API routes return errors or the underlying backend service is unavailable.
  * - Defines data types for API requests and responses.
  * - Provides helper functions for user nickname management.
  */
 // API Service - Centraliza todas las llamadas a la API con fallback a datos dummy
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+const API_BASE_URL = "/api"; // Calls are now proxied through Next.js API routes
 
 // Tipos para las respuestas de la API
 export interface PredictionRequest {
@@ -247,8 +244,7 @@ const generateDummyProgress = (): ProgressData[] => {
 // Headers estándar para todas las llamadas API (incluyendo ngrok)
 const getApiHeaders = (additionalHeaders: Record<string, string> = {}): Record<string, string> => {
   return {
-    "Content-Type": "application/json",
-    "ngrok-skip-browser-warning": "true", // Evita advertencias de ngrok al desarrollar/probar
+    "Content-Type": "application/json", // Still needed for POST/PUT to our /api routes
     ...additionalHeaders,
   }
 }
