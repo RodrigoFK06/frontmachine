@@ -36,6 +36,7 @@ export interface Label {
   description: string
   category: string
   difficulty: "beginner" | "intermediate" | "advanced"
+  sequence?: any[]; // Optional: A sequence associated with the label, structure might vary or be undefined.
 }
 
 export interface PredictionRecord {
