@@ -8,7 +8,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
 // TODO: Consider moving this to an environment variable for the Next.js server
-const NGROK_BACKEND_URL = "https://c090-2800-200-fdd0-2611-f82b-705-e365-f53.ngrok-free.app";
+const NGROK_BACKEND_URL = "https://c090-200-fdd0-2611-f82b-705-e365-f53.ngrok-free.app";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === 'GET') {
